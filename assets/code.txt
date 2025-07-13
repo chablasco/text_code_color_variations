@@ -1,119 +1,118 @@
-ArrayList<CodeWord> words = new ArrayList<CodeWord>();
-String[] code;
-PFont font;
-float scrollY = 0;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CB Code Viewer</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+<script>
+let words = [];
+let codeLines;
+let fontSize = 16;
+let scrollY = 0;
 
-void setup() {
-  fullScreen();
-  frameRate(20);  // Keep low for dramatic strobe
-  noSmooth();
-  font = createFont("Courier", 16);
-  textFont(font);
-  loadAndParseCode();
+function preload() {
+  codeLines = loadStrings('assets/code.txt');
 }
 
-void draw() {
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  textFont('Courier', fontSize);
+  textSize(fontSize);
+  noStroke();
+  parseCode();
+}
+
+function draw() {
   background(0);
-  for (CodeWord w : words) {
+  for (let w of words) {
     w.display();
   }
 }
 
-void mouseWheel(MouseEvent event) {
-  scrollY -= event.getCount() * 20;
-  scrollY = constrain(scrollY, -5000, 100);
-}
+function parseCode() {
+  let xStart = 20;
+  let yStart = 30;
+  let x = xStart;
+  let y = yStart;
 
-void loadAndParseCode() {
-  code = loadStrings("code.txt");
-  float xStart = 20;
-  float yStart = 30;
-  float x = xStart;
-  float y = yStart;
-
-  for (String line : code) {
-    String[] tokens = splitTokensWithWhitespace(line);
-    for (String t : tokens) {
-      CodeWord word = new CodeWord(t, x, y);
-      words.add(word);
+  for (let line of codeLines) {
+    let tokens = splitWithWhitespace(line);
+    for (let t of tokens) {
+      let w = new CodeWord(t, x, y);
+      words.push(w);
       x += textWidth(t);
     }
     x = xStart;
-    y += 24;
+    y += fontSize + 8;
   }
 }
 
-String[] splitTokensWithWhitespace(String line) {
-  ArrayList<String> parts = new ArrayList<String>();
-  StringBuilder sb = new StringBuilder();
-
-  for (int i = 0; i < line.length(); i++) {
-    char c = line.charAt(i);
-    if (c == ' ' || c == '\t') {
-      if (sb.length() > 0) {
-        parts.add(sb.toString());
-        sb.setLength(0);
+function splitWithWhitespace(line) {
+  let tokens = [];
+  let word = '';
+  for (let char of line) {
+    if (char === ' ' || char === '\t') {
+      if (word.length > 0) {
+        tokens.push(word);
+        word = '';
       }
-      parts.add(str(c));
+      tokens.push(char);
     } else {
-      sb.append(c);
+      word += char;
     }
   }
-  if (sb.length() > 0) {
-    parts.add(sb.toString());
-  }
-  return parts.toArray(new String[0]);
+  if (word.length > 0) tokens.push(word);
+  return tokens;
+}
+
+function mouseWheel(event) {
+  scrollY -= event.delta;
+  scrollY = constrain(scrollY, -10000, 100); // Adjust for content height
 }
 
 class CodeWord {
-  String word;
-  float baseX, baseY;
-  int baseColor;
-
-  CodeWord(String w, float x, float y) {
-    word = w;
-    baseX = x;
-    baseY = y;
-    baseColor = getColorForWord(w);
+  constructor(word, x, y) {
+    this.word = word;
+    this.x = x;
+    this.y = y;
   }
 
-  void display() {
-    float drawX = baseX;
-    float drawY = baseY + scrollY;
+  display() {
+    let drawX = this.x;
+    let drawY = this.y + scrollY;
+    let w = textWidth(this.word);
+    let h = fontSize;
 
-    float wordW = textWidth(word);
-    boolean hovered = mouseX > drawX && mouseX < drawX + wordW &&
-                      mouseY > drawY - 16 && mouseY < drawY;
+    let hovered = mouseX > drawX && mouseX < drawX + w &&
+                  mouseY > drawY - h && mouseY < drawY;
 
-    if (hovered) {
-      float scale = 1;
-      float fontSize = 16 * scale;
-      int bgCol = color(random(255), random(255), random(255));
-      int textCol = color(random(255), random(255), random(255));
-
-      fill(bgCol);
-      noStroke();
-      rect(drawX - 2, drawY - 14, wordW * scale + 4, fontSize + 4);
-
-      fill(textCol);
-      textSize(fontSize);
-      text(word, drawX, drawY);
+    if (hovered && this.word.trim() !== '') {
+      fill(random(255), random(255), random(255));
+      rect(drawX - 2, drawY - h + 4, w + 4, h + 4);
+      fill(random(255), random(255), random(255));
     } else {
-      fill(255); // white
-      noStroke();
-      textSize(16);
-      text(word, drawX, drawY);
+      fill(255);
     }
-  }
 
-  int getColorForWord(String w) {
-    if (w.equals("int")) return color(255, 0, 0);
-    if (w.equals("float")) return color(138, 43, 226);
-    if (w.equals("String")) return color(0, 128, 255);
-    if (w.equals("void") || w.equals("setup") || w.equals("draw") || w.equals("class")) return color(255, 255, 0);
-    if (w.equals("if") || w.equals("for") || w.equals("while") || w.equals("return")) return color(0, 255, 0);
-    if (w.equals("boolean")) return color(255, 105, 180);
-    if (w.matches("[(){};.,=<>!&|+-/*]")) return color(180);
-    return color(255); // default white
+    text(this.word, drawX, drawY);
   }
 }
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+</script>
+</body>
+</html>
