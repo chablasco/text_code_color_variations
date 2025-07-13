@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>CB Code Scroll Visual</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+      color: white;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+<script>
+let words = [];
+let code = [];
+let font;
+let scrollY = 0;
+let lineHeight = 24;
+
+function preload() {
+  code = loadStrings("assets/code.txt");
+}
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  textFont("Courier", 16);
+  textAlign(LEFT, BASELINE);
+  noSmooth();
+  frameRate(20);
+  parseCode();
+}
+
+function draw() {
+  background(0);
+  for (let w of words) {
+    w.display();
+  }
+}
+
+function mouseWheel(event) {
+  scrollY -= event.delta;
+  scrollY = constrain(scrollY, -5000, 100);
+}
+
+function parseCode() {
+  let xStart = 20;
+  let yStart = 30;
+  let x = xStart;
+  let y = yStart;
+
+  for (let line of code) {
+    let tokens = splitTokensWithWhitespace(line);
+    for (let t of tokens) {
+      words.push(new CodeWord(t, x, y));
+      x += textWidth(t);
+    }
+    x = xStart;
+    y += lineHeight;
+  }
+}
+
+function splitTokensWithWhitespace(line) {
+  let parts = [];
+  let sb = "";
+  for (let i = 0; i < line.length; i++) {
+    let c = line[i];
+    if (c === ' ' || c === '\t') {
+      if (sb.length > 0) {
+        parts.push(sb);
+        sb = "";
+      }
+      parts.push(c);
+    } else {
+      sb += c;
+    }
+  }
+  if (sb.length > 0) {
+    parts.push(sb);
+  }
+  return parts;
+}
+
+class CodeWord {
+  constructor(word, x, y) {
+    this.word = word;
+    this.baseX = x;
+    this.baseY = y;
+  }
+
+  display() {
+    let drawX = this.baseX;
+    let drawY = this.baseY + scrollY;
+
+    let wordW = textWidth(this.word);
+    let hovered = mouseX > drawX && mouseX < drawX + wordW &&
+                  mouseY > drawY - 16 && mouseY < drawY;
+
+    if (hovered) {
+      fill(random(255), random(255), random(255));
+    } else {
+      fill(255);
+    }
+    textSize(16);
+    text(this.word, drawX, drawY);
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+</script>
+</body>
+</html>
