@@ -112,7 +112,16 @@ class CodeWord {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+  initLayout();
 }
+
+function touchStarted() {
+  if (!fullscreen()) {
+    fullscreen(true);
+  }
+  return false;
+}
+  
 </script>
 </body>
 </html>
