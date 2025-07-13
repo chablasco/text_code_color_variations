@@ -1,0 +1,119 @@
+ArrayList<CodeWord> words = new ArrayList<CodeWord>();
+String[] code;
+PFont font;
+float scrollY = 0;
+
+void setup() {
+  fullScreen();
+  frameRate(20);  // Keep low for dramatic strobe
+  noSmooth();
+  font = createFont("Courier", 16);
+  textFont(font);
+  loadAndParseCode();
+}
+
+void draw() {
+  background(0);
+  for (CodeWord w : words) {
+    w.display();
+  }
+}
+
+void mouseWheel(MouseEvent event) {
+  scrollY -= event.getCount() * 20;
+  scrollY = constrain(scrollY, -5000, 100);
+}
+
+void loadAndParseCode() {
+  code = loadStrings("code.txt");
+  float xStart = 20;
+  float yStart = 30;
+  float x = xStart;
+  float y = yStart;
+
+  for (String line : code) {
+    String[] tokens = splitTokensWithWhitespace(line);
+    for (String t : tokens) {
+      CodeWord word = new CodeWord(t, x, y);
+      words.add(word);
+      x += textWidth(t);
+    }
+    x = xStart;
+    y += 24;
+  }
+}
+
+String[] splitTokensWithWhitespace(String line) {
+  ArrayList<String> parts = new ArrayList<String>();
+  StringBuilder sb = new StringBuilder();
+
+  for (int i = 0; i < line.length(); i++) {
+    char c = line.charAt(i);
+    if (c == ' ' || c == '\t') {
+      if (sb.length() > 0) {
+        parts.add(sb.toString());
+        sb.setLength(0);
+      }
+      parts.add(str(c));
+    } else {
+      sb.append(c);
+    }
+  }
+  if (sb.length() > 0) {
+    parts.add(sb.toString());
+  }
+  return parts.toArray(new String[0]);
+}
+
+class CodeWord {
+  String word;
+  float baseX, baseY;
+  int baseColor;
+
+  CodeWord(String w, float x, float y) {
+    word = w;
+    baseX = x;
+    baseY = y;
+    baseColor = getColorForWord(w);
+  }
+
+  void display() {
+    float drawX = baseX;
+    float drawY = baseY + scrollY;
+
+    float wordW = textWidth(word);
+    boolean hovered = mouseX > drawX && mouseX < drawX + wordW &&
+                      mouseY > drawY - 16 && mouseY < drawY;
+
+    if (hovered) {
+      float scale = 1;
+      float fontSize = 16 * scale;
+      int bgCol = color(random(255), random(255), random(255));
+      int textCol = color(random(255), random(255), random(255));
+
+      fill(bgCol);
+      noStroke();
+      rect(drawX - 2, drawY - 14, wordW * scale + 4, fontSize + 4);
+
+      fill(textCol);
+      textSize(fontSize);
+      text(word, drawX, drawY);
+    } else {
+      fill(255); // white
+      noStroke();
+      textSize(16);
+      text(word, drawX, drawY);
+    }
+  }
+
+  int getColorForWord(String w) {
+    if (w.equals("int")) return color(255, 0, 0);
+    if (w.equals("float")) return color(138, 43, 226);
+    if (w.equals("String")) return color(0, 128, 255);
+    if (w.equals("void") || w.equals("setup") || w.equals("draw") || w.equals("class")) return color(255, 255, 0);
+    if (w.equals("if") || w.equals("for") || w.equals("while") || w.equals("return")) return color(0, 255, 0);
+    if (w.equals("boolean")) return color(255, 105, 180);
+    if (w.matches("[(){};.,=<>!&|+-/*]")) return color(180);
+    return color(255); // default white
+  }
+}
