@@ -1,15 +1,14 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>CB Code Scroll Visual</title>
+  <meta charset="UTF-8" />
+  <title>CB Code Viewer</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
   <style>
     body {
       margin: 0;
       overflow: hidden;
       background: black;
-      color: white;
     }
     canvas {
       display: block;
@@ -19,21 +18,19 @@
 <body>
 <script>
 let words = [];
-let code = [];
-let font;
+let codeLines;
+let fontSize = 16;
 let scrollY = 0;
-let lineHeight = 24;
 
 function preload() {
-  code = loadStrings("assets/code.txt");
+  codeLines = loadStrings('assets/code.txt');
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  textFont("Courier", 16);
-  textAlign(LEFT, BASELINE);
-  noSmooth();
-  frameRate(20);
+  textFont('Courier', fontSize);
+  textSize(fontSize);
+  noStroke();
   parseCode();
 }
 
@@ -44,70 +41,71 @@ function draw() {
   }
 }
 
-function mouseWheel(event) {
-  scrollY -= event.delta;
-  scrollY = constrain(scrollY, -5000, 100);
-}
-
 function parseCode() {
   let xStart = 20;
   let yStart = 30;
   let x = xStart;
   let y = yStart;
 
-  for (let line of code) {
-    let tokens = splitTokensWithWhitespace(line);
+  for (let line of codeLines) {
+    let tokens = splitWithWhitespace(line);
     for (let t of tokens) {
-      words.push(new CodeWord(t, x, y));
+      let w = new CodeWord(t, x, y);
+      words.push(w);
       x += textWidth(t);
     }
     x = xStart;
-    y += lineHeight;
+    y += fontSize + 8;
   }
 }
 
-function splitTokensWithWhitespace(line) {
-  let parts = [];
-  let sb = "";
-  for (let i = 0; i < line.length; i++) {
-    let c = line[i];
-    if (c === ' ' || c === '\t') {
-      if (sb.length > 0) {
-        parts.push(sb);
-        sb = "";
+function splitWithWhitespace(line) {
+  let tokens = [];
+  let word = '';
+  for (let char of line) {
+    if (char === ' ' || char === '\t') {
+      if (word.length > 0) {
+        tokens.push(word);
+        word = '';
       }
-      parts.push(c);
+      tokens.push(char);
     } else {
-      sb += c;
+      word += char;
     }
   }
-  if (sb.length > 0) {
-    parts.push(sb);
-  }
-  return parts;
+  if (word.length > 0) tokens.push(word);
+  return tokens;
+}
+
+function mouseWheel(event) {
+  scrollY -= event.delta;
+  scrollY = constrain(scrollY, -10000, 100); // Adjust for content height
 }
 
 class CodeWord {
   constructor(word, x, y) {
     this.word = word;
-    this.baseX = x;
-    this.baseY = y;
+    this.x = x;
+    this.y = y;
   }
 
   display() {
-    let drawX = this.baseX;
-    let drawY = this.baseY + scrollY;
+    let drawX = this.x;
+    let drawY = this.y + scrollY;
+    let w = textWidth(this.word);
+    let h = fontSize;
 
-    let wordW = textWidth(this.word);
-    let hovered = mouseX > drawX && mouseX < drawX + wordW &&
-                  mouseY > drawY - 16 && mouseY < drawY;
+    let hovered = mouseX > drawX && mouseX < drawX + w &&
+                  mouseY > drawY - h && mouseY < drawY;
 
-    if (hovered) {
+    if (hovered && this.word.trim() !== '') {
+      fill(random(255), random(255), random(255));
+      rect(drawX - 2, drawY - h + 4, w + 4, h + 4);
       fill(random(255), random(255), random(255));
     } else {
       fill(255);
     }
-    textSize(16);
+
     text(this.word, drawX, drawY);
   }
 }
