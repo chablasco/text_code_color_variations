@@ -110,9 +110,13 @@ class CodeWord {
   }
 }
 
+function mousePressed() {
+  fullscreen(!fullscreen());
+}
+
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  initLayout();
+  setupGrid();
 }
 
 function touchStarted() {
